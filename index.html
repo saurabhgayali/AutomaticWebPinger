@@ -1,0 +1,60 @@
+<script>
+   // Proxies to use for pinging website
+   let proxies = [];
+   
+   // Index to keep track of which proxy to use
+   let proxyIndex = 0;
+   
+   // Function to retrieve free proxies from proxylist.geonode.com
+   const getProxies = async () => {
+       try {
+           const response = await fetch('https://proxylist.geonode.com/api/proxy-list?limit=500&page=1&sort_by=lastChecked&sort_type=desc');
+           const proxyData = await response.json();
+           proxies = proxyData.data.map(proxy => `${proxy.ip}:${proxy.port}`);
+           logmessage=`Retrieved ${proxies.length} proxies from proxylist.geonode.com at `+new Date();
+   console.log(logmessage);
+   document.getElementById("pingreport").innerHTML+="<br>"+logmessage;
+       } catch (error) {
+           console.error(`Error retrieving proxies: ${error}`);
+       }
+   };
+   
+   // Function to ping website
+   const pingWebsite = () => {
+       // Get current proxy
+       const proxy = proxies[proxyIndex];
+       // Increment proxy index for next iteration
+       proxyIndex = (proxyIndex + 1) % proxies.length;
+   
+       // Fetch website using current proxy
+   Website='https://www.yourwebsite.com/'
+       fetch(Website, {
+           mode: 'no-cors',
+           headers: {
+               'Content-Type': 'application/json'
+           },
+           proxy: `http://${proxy}`
+       })
+       .then(response => {
+   logmessage=`Website=`+Website+`; pinged successfully using proxy ${proxy}`+new Date();
+           console.log(logmessage);
+   document.getElementById("pingreport").innerHTML+="<br>"+logmessage;
+       })
+       .catch(error => {
+   logmessage=`Error pinging Website=`+Website+`;using proxy ${proxy}: ${error}`+new Date();
+           console.log(logmessage);
+   document.getElementById("pingreport").innerHTML+="<br>"+logmessage;
+       });
+   };
+   
+   // Call getProxies to retrieve initial list of proxies
+   getProxies();
+   
+   // Call pingWebsite every 5 minutes
+   setInterval(pingWebsite, 5 * 60 * 1000);
+   
+   // Call getProxies every 2 hours to refresh proxy list
+   setInterval(getProxies, 2 * 60 * 60 * 1000);
+   
+</script>
+<div id="pingreport">Log Start</div>
